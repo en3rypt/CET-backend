@@ -6,7 +6,7 @@ import { UserResponse } from './types/userResponse.type';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-  @Post()
+  @Post('register')
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<UserResponse> {

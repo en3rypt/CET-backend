@@ -23,6 +23,16 @@ export class UserService {
     return createdUser.save();
   }
 
+  async findOne(email: string): Promise<UserEntity> {
+    const user = await this.userModel
+      .findOne({ email: email })
+      .select('+password');
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+    return user;
+  }
+
   buildUserResponse(userEntity: UserEntity): UserResponse {
     return {
       username: userEntity.username,
