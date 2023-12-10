@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { hash } from 'bcrypt';
+import mongoose, { Types } from 'mongoose';
 
 @Schema()
 export class UserEntity {
@@ -11,6 +12,9 @@ export class UserEntity {
 
   @Prop({ select: false })
   password: string;
+
+  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Project' })
+  projects: Types.ObjectId[];
 }
 
 export const UserEntitySchema = SchemaFactory.createForClass(UserEntity);

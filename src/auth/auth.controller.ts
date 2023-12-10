@@ -21,4 +21,10 @@ export class AuthController {
     const user = await this.authService.loginUser(loginDto);
     return user;
   }
+
+  @Get()
+  @UseGuards(AuthGuard)
+  getHello(@Request() req): string {
+    return req.user;
+  }
 }
