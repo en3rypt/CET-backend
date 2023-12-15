@@ -15,7 +15,15 @@ export class AuthService {
 
   async loginUser(loginDto: LoginDto): Promise<LoginResponse> {
     const user = await this.userService.findOne(loginDto.email);
+    console.log(
+      '🚀 ~ file: auth.service.ts:18 ~ AuthService ~ loginUser ~ user:',
+      user,
+    );
     const isPasswordCorrect = await compare(loginDto.password, user.password);
+    console.log(
+      '🚀 ~ file: auth.service.ts:23 ~ AuthService ~ loginUser ~ isPasswordCorrect:',
+      isPasswordCorrect,
+    );
     if (!isPasswordCorrect) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
@@ -28,6 +36,10 @@ export class AuthService {
 
   async generateJwt(user: UserEntity): Promise<string> {
     const payload = { sub: user.email, username: user.username };
+    console.log(
+      '🚀 ~ file: auth.service.ts:40 ~ AuthService ~ generateJwt ~ payload:',
+      payload,
+    );
     return await this.jwtService.signAsync(payload);
   }
 }

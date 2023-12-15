@@ -18,6 +18,10 @@ export class AuthController {
     @Body()
     loginDto: LoginDto,
   ) {
+    console.log(
+      '🚀 ~ file: auth.controller.ts:21 ~ AuthController ~ loginDto:',
+      loginDto,
+    );
     const user = await this.authService.loginUser(loginDto);
     return user;
   }
