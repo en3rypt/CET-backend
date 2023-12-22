@@ -14,7 +14,10 @@ export class Project {
   })
   users: Types.ObjectId[];
 
-  @Prop({ required: true })
-  expense: [];
+  @Prop({ 
+    type: [mongoose.Schema.Types.ObjectId], 
+    ref: 'Expense'  
+  })
+  expenses: Types.ObjectId[];
 }
 export const ProjectSchema = SchemaFactory.createForClass(Project);

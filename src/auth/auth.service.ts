@@ -2,15 +2,15 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { LoginDto } from './dto/login.dto';
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
-import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from 'src/user/schemas/user.schema';
 import { LoginResponse } from './dto/loginResponse.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+
   ) {}
 
   async loginUser(loginDto: LoginDto): Promise<LoginResponse> {
@@ -20,14 +20,16 @@ export class AuthService {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
     return {
+      id: user._id,
       email: user.email,
       username: user.username,
-      access_token: await this.generateJwt(user),
     };
   }
 
-  async generateJwt(user: UserEntity): Promise<string> {
-    const payload = { sub: user.email, username: user.username };
-    return await this.jwtService.signAsync(payload);
+  async login(user: any) {
+    const payload = { id:user.id, email: user.email, username: user.username };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 }

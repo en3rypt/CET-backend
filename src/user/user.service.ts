@@ -23,10 +23,18 @@ export class UserService {
     return createdUser.save();
   }
 
-  async findOne(email: string): Promise<UserEntity> {
+  async findOne(email: string): Promise<any> {
     const user = await this.userModel
       .findOne({ email: email })
       .select('+password');
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+    return user;
+  }
+
+  async findUserById(id: string): Promise<any> {
+    const user = await this.userModel.findById(id).populate('projects');
     if (!user) {
       throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
     }

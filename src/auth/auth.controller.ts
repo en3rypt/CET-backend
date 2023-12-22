@@ -8,22 +8,21 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { AuthGuard } from './auth.gaurd';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+  @UseGuards(AuthGuard('local'))
   @Post('login')
   async loginUser(
-    @Body()
-    loginDto: LoginDto,
+    @Request() req
   ) {
-    const user = await this.authService.loginUser(loginDto);
-    return user;
+    return this.authService.login(req.user);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get()
-  @UseGuards(AuthGuard)
   getHello(@Request() req): string {
     return req.user;
   }

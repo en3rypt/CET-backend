@@ -7,20 +7,17 @@ import {
   Put,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { AuthGuard } from 'src/auth/auth.gaurd';
 import { CreateProjectDto } from './dto/createProject.dto';
 import { UserService } from 'src/user/user.service';
 import { AddUserDto } from './dto/addUser.dto';
-
+import { AuthGuard } from '@nestjs/passport';
 @Controller('project')
 export class ProjectController {
   constructor(
-    private readonly projectService: ProjectService,
-    private readonly userService: UserService,
-  ) {}
+    private readonly projectService: ProjectService,  ) {}
 
+    @UseGuards(AuthGuard('jwt'))
   @Post()
-  @UseGuards(AuthGuard)
   async createProject(
     @Request() req,
     @Body() createProjectDto: CreateProjectDto,
@@ -33,7 +30,6 @@ export class ProjectController {
   }
 
   @Put()
-  @UseGuards(AuthGuard)
   async addUser(
     @Body()
     addUserDto: AddUserDto,
