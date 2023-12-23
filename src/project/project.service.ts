@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Project } from './schema/project.schema';
 import { Model, Types } from 'mongoose';
@@ -26,8 +26,15 @@ export class ProjectService {
     return savedProject;
   }
 
-  async getProject(projectId: string): Promise<any>{
-    return await this.projectModel.findById(projectId).populate('users');
+  async getProject(userId: string, projectId: string): Promise<any>{
+    const user = await this.userService.findUserByIdWithoutProjects(userId);
+    if (!user) {
+      throw new UnprocessableEntityException('User does not exist');
+    }
+    if(!user.projects.includes(projectId)){
+      throw new NotFoundException('User is not a member of this project');
+    }
+    return await this.projectModel.findById(projectId).populate('users').populate('expenses');
   }
 
   async addUserToProject(email: string, projectId: string): Promise<any> {

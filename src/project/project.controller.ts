@@ -5,12 +5,14 @@ import {
   Request,
   Post,
   Put,
+  Get,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/createProject.dto';
 import { UserService } from 'src/user/user.service';
 import { AddUserDto } from './dto/addUser.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { getProjectDto } from './dto/getProject.dto';
 @Controller('project')
 export class ProjectController {
   constructor(
@@ -29,6 +31,13 @@ export class ProjectController {
     return createdProject;
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get()
+  async getProject(@Request() req, @Body() getProjectDto: getProjectDto): Promise<any> {
+    return await this.projectService.getProject(req.user.userId,getProjectDto.projectId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Put()
   async addUser(
     @Body()

@@ -41,6 +41,14 @@ export class UserService {
     return user;
   }
 
+  async findUserByIdWithoutProjects(id: string): Promise<any> {
+    const user = await this.userModel.findById(id)
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+    return user;
+  }
+
   async addProject(
     email: string,
     projectId: mongoose.Types.ObjectId,

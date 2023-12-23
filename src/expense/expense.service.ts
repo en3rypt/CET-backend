@@ -16,7 +16,7 @@ export class ExpenseService {
     ) {}
 
     async createExpense(expense: CreateExpenseDto, userData: any): Promise<Expense> {
-        const project = await this.projectService.getProject(expense.projectId);
+        const project = await this.projectService.getProject(userData.userId,expense.projectId);
         const user = await this.userService.findUserById(userData.userId);
         if(!user.projects.includes(expense.projectId)){
             throw new UnauthorizedException('User is not a member of this project');
