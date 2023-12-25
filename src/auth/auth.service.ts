@@ -10,7 +10,6 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-
   ) {}
 
   async loginUser(loginDto: LoginDto): Promise<LoginResponse> {
@@ -27,9 +26,12 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { id:user.id, email: user.email, username: user.username };
+    const payload = { id: user.id, email: user.email, username: user.username };
     return {
       access_token: this.jwtService.sign(payload),
+      username: user.username,
+      email: user.email,
+      id: user.id,
     };
   }
 }
