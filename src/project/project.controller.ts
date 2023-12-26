@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Get,
+  Param,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/createProject.dto';
@@ -15,10 +16,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { getProjectDto } from './dto/getProject.dto';
 @Controller('project')
 export class ProjectController {
-  constructor(
-    private readonly projectService: ProjectService,  ) {}
+  constructor(private readonly projectService: ProjectService) {}
 
-    @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   async createProject(
     @Request() req,
@@ -32,9 +32,12 @@ export class ProjectController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get()
-  async getProject(@Request() req, @Body() getProjectDto: getProjectDto): Promise<any> {
-    return await this.projectService.getProject(req.user.userId,getProjectDto.projectId);
+  @Get('/:projectId')
+  async getProject(
+    @Param('projectId') projectId: string,
+    @Request() req,
+  ): Promise<any> {
+    return await this.projectService.getProject(req.user.userId, projectId);
   }
 
   @UseGuards(AuthGuard('jwt'))
