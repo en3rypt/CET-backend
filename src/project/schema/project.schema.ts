@@ -14,10 +14,13 @@ export class Project {
   })
   users: Types.ObjectId[];
 
-  @Prop({ 
-    type: [mongoose.Schema.Types.ObjectId], 
-    ref: 'Expense'  
+  @Prop({
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Expense',
   })
   expenses: Types.ObjectId[];
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'UserEntity' })
+  createdBy: Types.ObjectId;
 }
 export const ProjectSchema = SchemaFactory.createForClass(Project);

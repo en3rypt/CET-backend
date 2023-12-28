@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Expense } from './schema/expense.schema';
 import { Model } from 'mongoose';
@@ -8,265 +12,297 @@ import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ExpenseService {
-    constructor(
-        @InjectModel(Expense.name)
-        private expenseModel: Model<Expense>,
-        private readonly  projectService: ProjectService,
-        private readonly userService: UserService,
-    ) {}
+  constructor(
+    @InjectModel(Expense.name)
+    private expenseModel: Model<Expense>,
+    private readonly projectService: ProjectService,
+    private readonly userService: UserService,
+  ) {}
 
-    async createExpense(expense: CreateExpenseDto, userData: any): Promise<Expense> {
-        const project = await this.projectService.getProject(userData.userId,expense.projectId);
-        const user = await this.userService.findUserById(userData.userId);
-        if(!user.projects.includes(expense.projectId)){
-            throw new UnauthorizedException('User is not a member of this project');
-        }
-        if(!project || !user){
-            throw new UnprocessableEntityException('Project does not exist');
-        }
-        const createdExpense = new this.expenseModel({...expense, createdBy: user._id});
-        const updatedProject = await this.projectService.AddExpenseToProject(createdExpense._id, project._id);
-        if(!updatedProject){
-            throw new UnprocessableEntityException('Could not update project');
-        }
-        return createdExpense.save();
+  async createExpense(
+    expense: CreateExpenseDto,
+    userData: any,
+  ): Promise<Expense> {
+    const project = await this.projectService.getProject(
+      userData.userId,
+      expense.projectId,
+    );
+    const user = await this.userService.findUserByIdWithoutProjects(
+      userData.userId,
+    );
+    if (!user.projects.includes(expense.projectId)) {
+      throw new UnauthorizedException('User is not a member of this project');
     }
-
-    async getExpenses(): Promise<Expense[]> {
-        return this.expenseModel.find();
+    if (!project || !user) {
+      throw new UnprocessableEntityException('Project does not exist');
     }
-
-    async getExpense(id: string): Promise<Expense> {
-        return this.expenseModel.findById(id);
+    const createdExpense = new this.expenseModel({
+      ...expense,
+      createdBy: user._id,
+    });
+    const updatedProject = await this.projectService.AddExpenseToProject(
+      createdExpense._id,
+      project._id,
+    );
+    if (!updatedProject) {
+      throw new UnprocessableEntityException('Could not update project');
     }
+    return createdExpense.save();
+  }
 
-    async updateExpense(id: string, expense: Expense): Promise<Expense> {
-        return this.expenseModel.findByIdAndUpdate(id, expense, { new: true });
-    }
+  async getProjectTotalExpenses(projectId: string): Promise<number> {
+    const result = await this.expenseModel
+      .aggregate([
+        {
+          $match: {
+            projectId: projectId,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$amount' },
+          },
+        },
+      ])
+      .exec();
 
-    // async deleteExpense(id: string): Promise<Expense> {
-    //     return this.expenseModel.findByIdAndRemove(id);
-    // }
+    // Check if there is a result and return the total, or return 0 if no result
+    return result.length > 0 ? result[0].total : 0;
+  }
+  async getExpenses(): Promise<Expense[]> {
+    return this.expenseModel.find();
+  }
 
-    async deleteAllExpenses(): Promise<any> {
-        return this.expenseModel.deleteMany({});
-    }
+  async getExpense(id: string): Promise<Expense> {
+    return this.expenseModel.findById(id);
+  }
 
-    async getExpensesByProject(projectId: string): Promise<Expense[]> {
-        return this.expenseModel.find({ project: projectId });
-    }
+  async updateExpense(id: string, expense: Expense): Promise<Expense> {
+    return this.expenseModel.findByIdAndUpdate(id, expense, { new: true });
+  }
 
-    async getExpensesByUser(userId: string): Promise<Expense[]> {
-        return this.expenseModel.find({ user: userId });
-    }
+  // async deleteExpense(id: string): Promise<Expense> {
+  //     return this.expenseModel.findByIdAndRemove(id);
+  // }
 
-    async getExpensesByProjectAndUser(
-        projectId: string,
-        userId: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ project: projectId, user: userId });
-    }
+  async deleteAllExpenses(): Promise<any> {
+    return this.expenseModel.deleteMany({});
+  }
 
-    async getExpensesByDate(date: Date): Promise<Expense[]> {
-        return this.expenseModel.find({ date: date });
-    }
+  async getExpensesByProject(projectId: string): Promise<Expense[]> {
+    return this.expenseModel.find({ project: projectId });
+  }
 
-    async getExpensesByCategory(category: string): Promise<Expense[]> {
-        return this.expenseModel.find({ category: category });
-    }
+  async getExpensesByUser(userId: string): Promise<Expense[]> {
+    return this.expenseModel.find({ user: userId });
+  }
 
-    async getExpensesByProjectAndDate(
-        projectId: string,
-        date: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ project: projectId, date: date });
-    }
+  async getExpensesByProjectAndUser(
+    projectId: string,
+    userId: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ project: projectId, user: userId });
+  }
 
-    async getExpensesByProjectAndCategory(
-        projectId: string,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ project: projectId, category: category });
-    }
+  async getExpensesByDate(date: Date): Promise<Expense[]> {
+    return this.expenseModel.find({ date: date });
+  }
 
-    async getExpensesByUserAndDate(
-        userId: string,
-        date: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ user: userId, date: date });
-    }
+  async getExpensesByCategory(category: string): Promise<Expense[]> {
+    return this.expenseModel.find({ category: category });
+  }
 
-    async getExpensesByUserAndCategory(
-        userId: string,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ user: userId, category: category });
-    }
+  async getExpensesByProjectAndDate(
+    projectId: string,
+    date: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ project: projectId, date: date });
+  }
 
-    async getExpensesByProjectAndUserAndDate(
-        projectId: string,
-        userId: string,
-        date: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            user: userId,
-            date: date,
-        });
-    }
+  async getExpensesByProjectAndCategory(
+    projectId: string,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ project: projectId, category: category });
+  }
 
-    async getExpensesByProjectAndUserAndCategory(
-        projectId: string,
-        userId: string,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            user: userId,
-            category: category,
-        });
-    }
+  async getExpensesByUserAndDate(
+    userId: string,
+    date: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ user: userId, date: date });
+  }
 
-    async getExpensesByDateAndCategory(
-        date: Date,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({ date: date, category: category });
-    }
+  async getExpensesByUserAndCategory(
+    userId: string,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ user: userId, category: category });
+  }
 
-    async getExpensesByProjectAndDateAndCategory(
-        projectId: string,
-        date: Date,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            date: date,
-            category: category,
-        });
-    }
+  async getExpensesByProjectAndUserAndDate(
+    projectId: string,
+    userId: string,
+    date: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      user: userId,
+      date: date,
+    });
+  }
 
-    async getExpensesByUserAndDateAndCategory(
-        userId: string,
-        date: Date,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            user: userId,
-            date: date,
-            category: category,
-        });
-    }
+  async getExpensesByProjectAndUserAndCategory(
+    projectId: string,
+    userId: string,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      user: userId,
+      category: category,
+    });
+  }
 
-    async getExpensesByProjectAndUserAndDateAndCategory(
-        projectId: string,
-        userId: string,
-        date: Date,
-        category: string,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            user: userId,
-            date: date,
-            category: category,
-        });
-    }
+  async getExpensesByDateAndCategory(
+    date: Date,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({ date: date, category: category });
+  }
 
-    async getExpensesByDateRange(
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByProjectAndDateAndCategory(
+    projectId: string,
+    date: Date,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      date: date,
+      category: category,
+    });
+  }
 
-    async getExpensesByProjectAndDateRange(
-        projectId: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByUserAndDateAndCategory(
+    userId: string,
+    date: Date,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      user: userId,
+      date: date,
+      category: category,
+    });
+  }
 
-    async getExpensesByUserAndDateRange(
-        userId: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            user: userId,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByProjectAndUserAndDateAndCategory(
+    projectId: string,
+    userId: string,
+    date: Date,
+    category: string,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      user: userId,
+      date: date,
+      category: category,
+    });
+  }
 
-    async getExpensesByProjectAndUserAndDateRange(
-        projectId: string,
-        userId: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            user: userId,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
-    async getExpensesByCategoryAndDateRange(
-        category: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            category: category,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByProjectAndDateRange(
+    projectId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
-    async getExpensesByProjectAndCategoryAndDateRange(
-        projectId: string,
-        category: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            category: category,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByUserAndDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      user: userId,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
-    async getExpensesByUserAndCategoryAndDateRange(
-        userId: string,
-        category: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            user: userId,
-            category: category,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByProjectAndUserAndDateRange(
+    projectId: string,
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      user: userId,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
-    async getExpensesByProjectAndUserAndCategoryAndDateRange(
-        projectId: string,
-        userId: string,
-        category: string,
-        startDate: Date,
-        endDate: Date,
-    ): Promise<Expense[]> {
-        return this.expenseModel.find({
-            project: projectId,
-            user: userId,
-            category: category,
-            date: { $gte: startDate, $lte: endDate },
-        });
-    }
+  async getExpensesByCategoryAndDateRange(
+    category: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      category: category,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
+  async getExpensesByProjectAndCategoryAndDateRange(
+    projectId: string,
+    category: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      category: category,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 
+  async getExpensesByUserAndCategoryAndDateRange(
+    userId: string,
+    category: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      user: userId,
+      category: category,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
+
+  async getExpensesByProjectAndUserAndCategoryAndDateRange(
+    projectId: string,
+    userId: string,
+    category: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Expense[]> {
+    return this.expenseModel.find({
+      project: projectId,
+      user: userId,
+      category: category,
+      date: { $gte: startDate, $lte: endDate },
+    });
+  }
 }

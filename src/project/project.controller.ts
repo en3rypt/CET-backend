@@ -51,4 +51,16 @@ export class ProjectController {
       addUserDto.projectId,
     );
   }
+
+  // @UseGuards(AuthGuard('jwt'))
+  // @Get('/stats/:projectId')
+  // async getProjectStats(
+  //   @Param('projectId') projectId: string,
+  //   @Request() req,
+  // ): Promise<any> {
+  //   return await this.projectService.getProjectStats(
+  //     req.user.userId,
+  //     projectId,
+  //   );
+  // }
 }
